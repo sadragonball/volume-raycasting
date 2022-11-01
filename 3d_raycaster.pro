@@ -24,6 +24,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+    src/foxvolume.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
     src/trackball.cpp \
@@ -33,6 +34,7 @@ SOURCES += \
     src/raycastvolume.cpp
 
 HEADERS += \
+    src/foxvolume.h \
     src/mainwindow.h \
     src/trackball.h \
     src/raycastcanvas.h \
@@ -55,4 +57,5 @@ gcc:QMAKE_CXXFLAGS += -std=c++17
 gcc:QMAKE_CXXFLAGS_RELEASE += -fopenmp -Ofast
 gcc:LIBS += -fopenmp
 
+msvc:QMAKE_CXXFLAGS += -std:c++17 -Zc:__cplusplus
 msvc:QMAKE_CXXFLAGS_RELEASE += /openmp /O2

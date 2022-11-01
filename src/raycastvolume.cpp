@@ -1,28 +1,6 @@
-/*
- * Copyright © 2018 Martino Pilia <martino.pilia@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
 #include "raycastvolume.h"
 #include "vtkvolume.h"
+#include "foxvolume.h"
 
 #include <QRegularExpression>
 
@@ -78,6 +56,7 @@ RayCastVolume::RayCastVolume(void)
  */
 RayCastVolume::~RayCastVolume()
 {
+    glDeleteTextures(1, &m_noise_texture);
 }
 
 
@@ -86,7 +65,7 @@ RayCastVolume::~RayCastVolume()
  * \param File to be loaded.
  */
 void RayCastVolume::load_volume(const QString& filename) {
-    std::vector<unsigned char> data;
+    uint8_t* data;
 
     QRegularExpression re {"^.*\\.([^\\.]+)$"};
     QRegularExpressionMatch match = re.match(filename);
@@ -97,13 +76,13 @@ void RayCastVolume::load_volume(const QString& filename) {
 
     const std::string extension {match.captured(1).toLower().toStdString()};
     if ("vtk" == extension) {
-        VTKVolume volume {filename.toStdString()};
-        volume.uint8_normalised();
+        FoxVolume volume {filename.toStdString()};
+//        volume.uint8_normalized();
         m_size = QVector3D(std::get<0>(volume.size()), std::get<1>(volume.size()), std::get<2>(volume.size()));
         m_origin = QVector3D(std::get<0>(volume.origin()), std::get<1>(volume.origin()), std::get<2>(volume.origin()));
         m_spacing = QVector3D(std::get<0>(volume.spacing()), std::get<1>(volume.spacing()), std::get<2>(volume.spacing()));
         m_range = volume.range();
-        data = volume.data();
+        data = volume.data_ptr();
     }
     else {
         throw std::runtime_error("Unrecognised extension '" + extension + "'.");
@@ -118,7 +97,7 @@ void RayCastVolume::load_volume(const QString& filename) {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // The array on the host has 1 byte alignment
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, m_size.x(), m_size.y(), m_size.z(), 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R8, m_size.x(), m_size.y(), m_size.z(), 0, GL_RED, GL_UNSIGNED_BYTE, data);
     glBindTexture(GL_TEXTURE_3D, 0);
 }
 
@@ -134,9 +113,10 @@ void RayCastVolume::create_noise(void)
     const int height = viewport[3];
 
     std::srand(std::time(NULL));
-    unsigned char noise[width * height];
 
-    for (unsigned char *p = noise; p <= noise + width * height; ++p) {
+    auto noise_texture = new GLubyte[width * height]();
+
+    for (auto *p = noise_texture; p <= noise_texture + width * height; ++p) {
         *p = std::rand() % 256;
     }
 
@@ -147,7 +127,7 @@ void RayCastVolume::create_noise(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, noise);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, noise_texture);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
