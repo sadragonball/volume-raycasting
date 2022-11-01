@@ -98,7 +98,7 @@ void MainWindow::on_stepLength_valueChanged(double arg1)
  */
 void MainWindow::on_loadVolume_clicked()
 {
-    QString path = QFileDialog::getOpenFileName(this, tr("Open volume"), ".", tr("Raw Files (*.vtk *.big *.raw)"));
+    QString path = QFileDialog::getOpenFileName(this, tr("Open volume"), "E:\\Raws", tr("Raw Files (*.vtk *.vol *.raw)"));
     if (!path.isNull()) {
         load_volume(path);
     }

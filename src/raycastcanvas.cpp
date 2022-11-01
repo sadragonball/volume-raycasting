@@ -141,8 +141,7 @@ void RayCastCanvas::raycasting(const QString& shader)
         m_shaders[shader]->setUniformValue("volume", 0);
         m_shaders[shader]->setUniformValue("jitter", 1);
 
-        glClearColor(0., 0.45, 1.0, 1.0);
-//        glClearColor(m_background.redF(), m_background.greenF(), m_background.blueF(), m_background.alphaF());
+        glClearColor(m_background.redF(), m_background.greenF(), m_background.blueF(), m_background.alphaF());
         glClear(GL_COLOR_BUFFER_BIT);
 
         m_raycasting_volume->paint();

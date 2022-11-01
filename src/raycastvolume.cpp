@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cmath>
 
+static QRegularExpression Regex;
+
 
 /*!
  * \brief Create a two-unit cube mesh as the bounding box for the volume.
@@ -15,37 +17,37 @@ RayCastVolume::RayCastVolume(void)
     : m_volume_texture {0}
     , m_noise_texture {0}
     , m_cube_vao {
-          {
-              -1.0f, -1.0f,  1.0f,
-               1.0f, -1.0f,  1.0f,
-               1.0f,  1.0f,  1.0f,
-              -1.0f,  1.0f,  1.0f,
-              -1.0f, -1.0f, -1.0f,
-               1.0f, -1.0f, -1.0f,
-               1.0f,  1.0f, -1.0f,
-              -1.0f,  1.0f, -1.0f,
+{
+          -1.0f, -1.0f,  1.0f,
+          1.0f, -1.0f,  1.0f,
+          1.0f,  1.0f,  1.0f,
+          -1.0f,  1.0f,  1.0f,
+          -1.0f, -1.0f, -1.0f,
+          1.0f, -1.0f, -1.0f,
+          1.0f,  1.0f, -1.0f,
+          -1.0f,  1.0f, -1.0f,
           },
-          {
-              // front
-              0, 1, 2,
-              0, 2, 3,
-              // right
-              1, 5, 6,
-              1, 6, 2,
-              // back
-              5, 4, 7,
-              5, 7, 6,
-              // left
-              4, 0, 3,
-              4, 3, 7,
-              // top
-              2, 6, 7,
-              2, 7, 3,
-              // bottom
-              4, 5, 1,
-              4, 1, 0,
+{
+          // front
+          0, 1, 2,
+          0, 2, 3,
+          // right
+          1, 5, 6,
+          1, 6, 2,
+          // back
+          5, 4, 7,
+          5, 7, 6,
+          // left
+          4, 0, 3,
+          4, 3, 7,
+          // top
+          2, 6, 7,
+          2, 7, 3,
+          // bottom
+          4, 5, 1,
+          4, 1, 0,
           }
-      }
+          }
 {
     initializeOpenGLFunctions();
 }
@@ -67,17 +69,19 @@ RayCastVolume::~RayCastVolume()
 void RayCastVolume::load_volume(const QString& filename) {
     uint8_t* data;
 
-    QRegularExpression re {"^.*\\.([^\\.]+)$"};
-    QRegularExpressionMatch match = re.match(filename);
+    Regex.setPattern("^.*\\.([^\\.]+)$");
+    QRegularExpressionMatch match = Regex.match(filename);
 
     if (!match.hasMatch()) {
         throw std::runtime_error("Cannot determine file extension.");
     }
 
     const std::string extension {match.captured(1).toLower().toStdString()};
-    if ("vtk" == extension) {
+    if ("vtk" == extension ||
+        "raw" == extension ||
+        "vol" == extension) {
         FoxVolume volume {filename.toStdString()};
-//        volume.uint8_normalized();
+        //        volume.uint8_normalized();
         m_size = QVector3D(std::get<0>(volume.size()), std::get<1>(volume.size()), std::get<2>(volume.size()));
         m_origin = QVector3D(std::get<0>(volume.origin()), std::get<1>(volume.origin()), std::get<2>(volume.origin()));
         m_spacing = QVector3D(std::get<0>(volume.spacing()), std::get<1>(volume.spacing()), std::get<2>(volume.spacing()));

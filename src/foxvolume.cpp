@@ -23,16 +23,22 @@ static void read_data(std::ifstream& file,
                       const size_t element_count,
                       uint8_t* image_data,
                       std::pair<double, double>& range,
+                      size_t skip = 0,
                       bool is_little_endian = false) {
 
 
-    T voxel;
-    T* p = image_data;
-    for (size_t i = 0; i < element_count; ++i) {
-        file >> voxel;
-        *p = voxel;
-        p++;
-    }
+
+    file.seekg(skip, std::ios::beg);
+
+    file.read(reinterpret_cast<char*>(image_data), element_count * sizeof(T));
+    //    T voxel;
+    //    T* p = image_data;
+    //    not binary
+    //    for (size_t i = 0; i < element_count; ++i) {
+    //        file >> voxel;
+    //        *p = voxel;
+    //        p++;
+    //    }
 
     // Find range
     range = {std::numeric_limits<double>::max(), std::numeric_limits<double>::min()};
@@ -69,7 +75,7 @@ FoxVolume::FoxVolume(const std::string& filename) {
     m_origin = {0.,0.,0.};
     m_datatype = DataType::Uint8;
     m_spacing = {0.1, 0.1, 0.1};
-    m_size = {256,256,256};
+    m_size = {256, 256, 256};
 
     load_volume(filename);
 }
@@ -99,7 +105,7 @@ void FoxVolume::load_volume(const std::string& filename) {
     case FoxVolume::DataType::Uint8:
     {
         m_data = new uint8_t[voxel_count]();
-        read_data<uint8_t>(file,voxel_count, m_data, m_range);
+        read_data<uint8_t>(file,voxel_count, m_data, m_range, 28);
         break;
     }
     }
