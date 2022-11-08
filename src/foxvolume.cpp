@@ -55,10 +55,11 @@ static void read_data(std::ifstream& file,
 template<typename T>
 void normalize(uint8_t* data,
                std::pair<double,double>& range,
+               uint8_t* normalized_data,
                size_t element_count) {
     T* p = reinterpret_cast<T*>(data);
     for(size_t i = 0; i < element_count; ++i) {
-        p[i] = static_cast<uint8_t>(
+        normalized_data[i] = static_cast<uint8_t>(
                     255 *
                     (static_cast<double>(p[i]) - range.first) /
                     (range.second - range.first)
@@ -72,10 +73,10 @@ FoxVolume::FoxVolume()
 
 FoxVolume::FoxVolume(const std::string& filename) {
     m_data = nullptr;
-    m_origin = {0.,0.,0.};
-    m_datatype = DataType::Uint8;
+    m_origin = {0., 0., 0.};
+    m_datatype = DataType::Uint16;
     m_spacing = {0.1, 0.1, 0.1};
-    m_size = {256, 256, 256};
+    m_size = {2000, 3072, 600};
 
     load_volume(filename);
 }
@@ -86,11 +87,18 @@ FoxVolume::~FoxVolume() {}
 
 void FoxVolume::uint8_normalized() {
     size_t element_count = std::get<0>(m_size) * std::get<1>(m_size) * std::get<2>(m_size);
+    void* normalized_data = malloc(element_count);
     switch(m_datatype) {
     case FoxVolume::DataType::Uint8:
-        normalize<uint8_t>(m_data, m_range,element_count);
+        normalize<uint8_t>(m_data, m_range,static_cast<uint8_t*>(normalized_data),element_count);
+        break;
+    case FoxVolume::DataType::Uint16:
+        normalize<uint16_t>(m_data, m_range,static_cast<uint8_t*>(normalized_data),element_count);
         break;
     }
+
+    delete m_data;
+    m_data = static_cast<uint8_t*>(normalized_data);
 }
 
 
@@ -103,10 +111,18 @@ void FoxVolume::load_volume(const std::string& filename) {
     size_t voxel_count = std::get<0>(m_size) * std::get<1>(m_size) * std::get<2>(m_size);
     switch(m_datatype) {
     case FoxVolume::DataType::Uint8:
+        {
+            m_data = new uint8_t[voxel_count]();
+            read_data<uint8_t>(file,voxel_count, m_data, m_range, 0);
+            break;
+        }
     {
-        m_data = new uint8_t[voxel_count]();
-        read_data<uint8_t>(file,voxel_count, m_data, m_range, 28);
-        break;
+    case FoxVolume::DataType::Uint16:
+        {
+            m_data = new uint8_t[voxel_count*2]();
+            read_data<uint16_t>(file,voxel_count, m_data, m_range, 0);
+            break;
+        }
     }
     }
 

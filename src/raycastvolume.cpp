@@ -81,7 +81,7 @@ void RayCastVolume::load_volume(const QString& filename) {
         "raw" == extension ||
         "vol" == extension) {
         FoxVolume volume {filename.toStdString()};
-        //        volume.uint8_normalized();
+        volume.uint8_normalized();
         m_size = QVector3D(std::get<0>(volume.size()), std::get<1>(volume.size()), std::get<2>(volume.size()));
         m_origin = QVector3D(std::get<0>(volume.origin()), std::get<1>(volume.origin()), std::get<2>(volume.origin()));
         m_spacing = QVector3D(std::get<0>(volume.spacing()), std::get<1>(volume.spacing()), std::get<2>(volume.spacing()));

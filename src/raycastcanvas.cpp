@@ -95,6 +95,12 @@ void RayCastCanvas::paintGL()
 
     // Perform raycasting
     m_modes[m_active_mode]();
+    GLint memory_kb = 0;
+    glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memory_kb);
+    GLint current_memory = 0;
+    glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &current_memory);
+
+    qDebug("%f/%f", (current_memory / float(1024 * 1024)), (memory_kb / float(1024 * 1024)));
 }
 
 
